@@ -1,0 +1,16 @@
+type User {
+    id: ID!
+    name: String!
+    count: Int!
+}
+
+type Query {
+    users: [User]
+    user(id: ID!): User!
+    error: User
+    logHeader: Boolean
+}
+
+type Mutation {
+    changeName(newName: String!): User!
+}
