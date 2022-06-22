@@ -1,7 +1,8 @@
 type User {
     id: ID!
     name: String!
-    count: Int!
+    email: String!
+    friends: [User]!
 }
 
 type Query {

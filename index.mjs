@@ -14,25 +14,29 @@ const mockSchema = addMocksToSchema({
 });
 
 const resolvers = () => {
-  const schemaFields = schema.getQueryType().getFields()
+  const schemaFields = schema.getQueryType().getFields();
+  const mockSchemaFields = mockSchema.getQueryType().getFields();
+
   const Query = Object.values(schemaFields).reduce((acc, field) => {
-    if (field.args.find(item => item.name === ERROR_ARG)) {
-      return {...acc, [field.name]: (source, args, context, info) => {
+    if (field.args.find((item) => item.name === ERROR_ARG)) {
+      return {
+        ...acc,
+        [field.name]: (source, args, context, info) => {
           if (args.err) {
             throw new GraphQLYogaError('Error');
           }
 
-          const mockResolve = mockSchema.getQueryType().getFields()[field.name].resolve;
+          const mockResolve = mockSchemaFields[field.name].resolve;
 
           return mockResolve(source, args, context, info);
-        }}
+        },
+      };
     }
-    return acc
+    return acc;
   }, {});
 
-  return {Query}
-}
-
+  return { Query };
+};
 
 const schemaWithMocks = addMocksToSchema({
   schema,
@@ -42,7 +46,7 @@ const schemaWithMocks = addMocksToSchema({
 
 // Create your server
 const server = createServer({
-  schema: schemaWithMocks
+  schema: schemaWithMocks,
 });
 
 server.start();
