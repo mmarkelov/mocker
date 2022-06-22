@@ -4,23 +4,45 @@ import { addMocksToSchema } from '@graphql-tools/mock';
 import typeDefs from './schemas/index.mjs';
 import mocks from './mocks/index.mjs';
 
+const ERROR_ARG = 'err';
+
 const schema = makeExecutableSchema({ typeDefs });
+
+const mockSchema = addMocksToSchema({
+  schema,
+  mocks,
+});
+
+const resolvers = () => {
+  const schemaFields = schema.getQueryType().getFields()
+  const Query = Object.values(schemaFields).reduce((acc, field) => {
+    if (field.args.find(item => item.name === ERROR_ARG)) {
+      return {...acc, [field.name]: (source, args, context, info) => {
+          if (args.err) {
+            throw new GraphQLYogaError('Error');
+          }
+
+          const mockResolve = mockSchema.getQueryType().getFields()[field.name].resolve;
+
+          return mockResolve(source, args, context, info);
+        }}
+    }
+    return acc
+  }, {});
+
+  return {Query}
+}
+
 
 const schemaWithMocks = addMocksToSchema({
   schema,
   mocks,
-  resolvers: (_store) => ({
-    Query: {
-      error: (_, _args, context) => {
-        throw new GraphQLYogaError('User with id not found.');
-      },
-    },
-  }),
+  resolvers,
 });
 
 // Create your server
 const server = createServer({
   schema: schemaWithMocks
 });
-// start the server and explore http://localhost:4000/graphql
+
 server.start();

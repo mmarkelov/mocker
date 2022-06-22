@@ -5,10 +5,8 @@ type User {
 }
 
 type Query {
-    users: [User]
-    user(id: ID!): User!
-    error: User
-    logHeader: Boolean
+    users(err: Boolean): [User]
+    user(id: ID!, err: Boolean): User!
 }
 
 type Mutation {
