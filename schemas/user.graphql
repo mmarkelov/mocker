@@ -7,7 +7,7 @@ type User {
 
 type Query {
     users(err: Boolean): [User]
-    user(id: ID!, err: Boolean): User!
+    authUser(id: ID!, err: Boolean): User!
 }
 
 type Mutation {
