@@ -4,8 +4,11 @@ import { addMocksToSchema } from '@graphql-tools/mock';
 import typeDefs from './schemas/index.mjs';
 import mocks from './mocks/index.mjs';
 
-const ERROR_ARG = 'err';
 const AUTH_PREFIX = 'auth';
+
+const VARIANTS = {
+  error: 0.5,
+};
 
 const schema = makeExecutableSchema({ typeDefs });
 
@@ -21,35 +24,27 @@ const resolvers = () => {
   const Query = Object.values(schemaFields).reduce((acc, field) => {
     const mockResolve = mockSchemaFields[field.name].resolve;
 
-    if (field.name.startsWith(AUTH_PREFIX)) {
-      return {
-        ...acc,
-        [field.name]: (source, args, context, info) => {
+    return {
+      ...acc,
+      [field.name]: (source, args, context, info) => {
+        const randomNum = Math.random();
+
+        if (field.name.startsWith(AUTH_PREFIX)) {
           const token = context.request.headers.get('authorization');
           if (!token) {
             throw new GraphQLYogaError('Unauthorized', {
               code: 'UNAUTHORIZED',
             });
           }
+        }
 
-          return mockResolve(source, args, context, info);
-        },
-      };
-    }
+        if (randomNum < VARIANTS.error) {
+          throw new GraphQLYogaError('Error');
+        }
 
-    if (field.args.find((item) => item.name === ERROR_ARG)) {
-      return {
-        ...acc,
-        [field.name]: (source, args, context, info) => {
-          if (args.err) {
-            throw new GraphQLYogaError('Error');
-          }
-
-          return mockResolve(source, args, context, info);
-        },
-      };
-    }
-    return acc;
+        return mockResolve(source, args, context, info);
+      },
+    };
   }, {});
 
   return { Query };
@@ -66,4 +61,6 @@ const server = createServer({
   schema: schemaWithMocks,
 });
 
-server.start();
+// server.start();
+
+export { server };

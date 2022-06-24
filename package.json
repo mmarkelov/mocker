@@ -9,6 +9,7 @@
     "lint:fix": "eslint --fix \"**/*.mjs\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "bin": "./bin/index.mjs",
   "author": "mmarkelov",
   "license": "MIT",
   "dependencies": {
