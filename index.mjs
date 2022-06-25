@@ -17,37 +17,46 @@ const mockSchema = addMocksToSchema({
   mocks,
 });
 
+const getResolver = (fieldName, mockResolve) => (source, args, context, info) => {
+  const randomNum = Math.random();
+
+  if (fieldName.startsWith(AUTH_PREFIX)) {
+    const token = context.request.headers.get('authorization');
+    if (!token) {
+      throw new GraphQLYogaError('Unauthorized', {
+        code: 'UNAUTHORIZED',
+      });
+    }
+  }
+
+  if (randomNum < VARIANTS.error) {
+    throw new GraphQLYogaError('Error');
+  }
+
+  return mockResolve(source, args, context, info);
+}
+
+const getResolversByFields = (fields, mockFields) => Object.values(fields).reduce((acc, field) => {
+  const fieldName = field.name;
+  const mockResolve = mockFields[fieldName].resolve;
+
+  return {
+    ...acc,
+    [fieldName]: getResolver(fieldName, mockResolve),
+  };
+}, {})
+
 const resolvers = () => {
-  const schemaFields = schema.getQueryType().getFields();
-  const mockSchemaFields = mockSchema.getQueryType().getFields();
+  const schemaQueryFields = schema.getQueryType().getFields();
+  const mockSchemaQueryFields = mockSchema.getQueryType().getFields();
 
-  const Query = Object.values(schemaFields).reduce((acc, field) => {
-    const mockResolve = mockSchemaFields[field.name].resolve;
+  const schemaMutationFields = schema.getMutationType().getFields();
+  const mockSchemaMutationFields = mockSchema.getMutationType().getFields();
 
-    return {
-      ...acc,
-      [field.name]: (source, args, context, info) => {
-        const randomNum = Math.random();
+  const Query = getResolversByFields(schemaQueryFields, mockSchemaQueryFields);
+  const Mutation = getResolversByFields(schemaMutationFields, mockSchemaMutationFields);
 
-        if (field.name.startsWith(AUTH_PREFIX)) {
-          const token = context.request.headers.get('authorization');
-          if (!token) {
-            throw new GraphQLYogaError('Unauthorized', {
-              code: 'UNAUTHORIZED',
-            });
-          }
-        }
-
-        if (randomNum < VARIANTS.error) {
-          throw new GraphQLYogaError('Error');
-        }
-
-        return mockResolve(source, args, context, info);
-      },
-    };
-  }, {});
-
-  return { Query };
+  return { Query, Mutation };
 };
 
 const schemaWithMocks = addMocksToSchema({
