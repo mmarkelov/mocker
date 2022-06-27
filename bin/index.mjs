@@ -1,4 +1,4 @@
 #!/usr/bin/env node
-import { server } from '../index.mjs';
+import { server } from '../graphql.mjs';
 
 server.start();

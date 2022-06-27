@@ -34,7 +34,7 @@ const getResolver = (fieldName, mockResolve) => (source, args, context, info) =>
   }
 
   return mockResolve(source, args, context, info);
-}
+};
 
 const getResolversByFields = (fields, mockFields) => Object.values(fields).reduce((acc, field) => {
   const fieldName = field.name;
@@ -44,7 +44,7 @@ const getResolversByFields = (fields, mockFields) => Object.values(fields).reduc
     ...acc,
     [fieldName]: getResolver(fieldName, mockResolve),
   };
-}, {})
+}, {});
 
 const resolvers = () => {
   const schemaQueryFields = schema.getQueryType().getFields();
